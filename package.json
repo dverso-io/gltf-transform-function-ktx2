@@ -1,0 +1,59 @@
+{
+  "name": "gltf-transform-function-ktx2",
+  "version": "0.0.1",
+  "description": "GLTF transform function to compress textures to KTX2 format",
+  "author": "Danilo Flemma <daniloflemma@dverso.io> (https://dversostudio.io)",
+  "homepage": "https://github.com/dverso-io/gltf-transform-function-ktx2",
+  "repository": "github:dverso-io/gltf-transform-function-ktx2",
+  "license": "ISC",
+  "keywords": [
+    "vite",
+    "typescript",
+    "npm",
+    "package"
+  ],
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc && vite build --watch",
+    "start": "vite --host --open",
+    "build": "tsc && vite build",
+    "build:types": "dts-bundle-generator --config ./dts-bundle-generator.config.ts",
+    "lint:scripts": "eslint ./src --ext .ts",
+    "lint:styles": "stylelint ./**/*.{css,scss}",
+    "format:scripts": "prettier ./src --write",
+    "format:styles": "stylelint ./**/*.{css,scss} --fix"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.0.10",
+    "@gltf-transform/extensions": "^4.0.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "vite-plugin-arraybuffer": "^0.0.8",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "dts-bundle-generator": "^9.5.1",
+    "eslint": "^9.11.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
+    "stylelint": "^16.9.0",
+    "stylelint-config-recommended": "^14.0.1",
+    "stylelint-config-sass-guidelines": "^12.1.0",
+    "tslib": "^2.7.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "vite-plugin-dts": "^4.2.2"
+  }
+}
