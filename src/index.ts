@@ -6,6 +6,17 @@ import wasmBinary from "./basis_encoder.wasm?arraybuffer";
 
 let encoder : IBasisEncoder;
 
+const DefaultOptions = {
+	enableDebug: false,
+	isUASTC: true,
+	isKTX2File: true,
+	isInputSRGB: true,
+	generateMipmap: true,
+	needSupercompression: true,
+	isSetKTX2SRGBTransferFunc: true,
+	qualityLevel: 150
+};
+
 export const enum BasisTextureType {
     cBASISTexType2D,
     cBASISTexType2DArray,
@@ -14,7 +25,6 @@ export const enum BasisTextureType {
     cBASISTexTypeVolume
 }
 
-/** image source type */
 export const enum SourceType {
     RAW,
     PNG
@@ -201,68 +211,58 @@ export interface IEncodeOptions {
    */
   imageDecoder?: (buffer: Uint8Array) => Promise<{ width: number; height: number; data: Uint8Array }>;
 }
+
 const canvas = new OffscreenCanvas(128, 128);
 const gl = canvas.getContext("webgl2", {
 	premultipliedAlpha: false
 });
+
 async function webglDecode(imageBuffer : Uint8Array, resize = [512, 512]) {
 	const imageBitmap = await createImageBitmap(new Blob([imageBuffer]));
 	let [resizeWidth, resizeHeight] = resize;
 
-	// Ensure dimensions are power of two (POT)
 	const ensurePOT = (value : number) => {
 		return Math.pow(2, Math.ceil(Math.log2(value)));
 	};
 
-	// Get the aspect ratio of the original image
 	const originalWidth = imageBitmap.width;
 	const originalHeight = imageBitmap.height;
 	const aspectRatio = originalWidth / originalHeight;
 
-	// Calculate the resize dimensions while preserving the aspect ratio
 	if (resizeWidth / resizeHeight > aspectRatio) {
 		resizeWidth = resizeHeight * aspectRatio;
 	} else {
 		resizeHeight = resizeWidth / aspectRatio;
 	}
 
-	// Ensure dimensions are POT (Power of Two)
 	let width = ensurePOT(resizeWidth);
 	let height = ensurePOT(resizeHeight);
 
-	// Create a canvas to draw the resized image
 	const canvas = document.createElement('canvas');
 	const ctx = canvas.getContext('2d');
-    if (ctx === null || gl === null) {
-        throw new Error('WebGL context is not available.');
-    }
+  if (ctx === null || gl === null) {
+      throw new Error('WebGL context is not available.');
+  }
 	canvas.width = width;
 	canvas.height = height;
 
-	// Draw the image to the canvas at the correct size
 	ctx.drawImage(imageBitmap, 0, 0, width, height);
 
-	// Create a WebGL texture from the canvas
 	let texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-
-	// Set up texture parameters
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-	// Create framebuffer
 	let framebuffer = gl.createFramebuffer();
 	gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
-	// Read the pixels from the framebuffer
 	let pixels = new Uint8Array(width * height * 4);
 	gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-	// Clean up resources
 	gl.deleteTexture(texture);
 	gl.deleteFramebuffer(framebuffer);
 
@@ -274,16 +274,6 @@ async function webglDecode(imageBuffer : Uint8Array, resize = [512, 512]) {
 }
 
 
-const DefaultOptions = {
-	enableDebug: false,
-	isUASTC: true,
-	isKTX2File: true,
-	isInputSRGB: true,
-	generateMipmap: true,
-	needSupercompression: true,
-	isSetKTX2SRGBTransferFunc: true,
-	qualityLevel: 150
-};
 
 function applyInputOptions(options : Partial<IEncodeOptions> = {}, encoder : any) {
 	options = {
@@ -301,7 +291,8 @@ function applyInputOptions(options : Partial<IEncodeOptions> = {}, encoder : any
 	options.needSupercompression !== undefined && encoder.setKTX2UASTCSupercompression(options.needSupercompression);
 	options.isNormalMap !== undefined && encoder.setNormalMap(options.isNormalMap);
 }
-const getEncoder = async (options : Partial<IEncodeOptions> = {}) => {
+
+async function getEncoder(options : Partial<IEncodeOptions> = {}) {
     if (!encoder) {
         let basisModule = await BASIS({
             wasmBinary,
@@ -313,7 +304,8 @@ const getEncoder = async (options : Partial<IEncodeOptions> = {}) => {
     }
     return encoder;
 }
-const basisEncode = async (encoder : IBasisEncoder,imageBuffer : Uint8Array, resize : number[]) => {
+
+async function basisEncode(encoder : IBasisEncoder,imageBuffer : Uint8Array, resize : number[]){
     let imageData = await webglDecode(imageBuffer, resize);
     encoder.setSliceSourceImage(
         0,
@@ -332,14 +324,14 @@ const basisEncode = async (encoder : IBasisEncoder,imageBuffer : Uint8Array, res
     return actualKTX2FileData;
 }
 
-const textureCompressKTX2 = (options : {
+function textureCompressKTX2(options : {
     resize : number[],
     basisOptions? : Partial<IEncodeOptions>,
     resizeCustom? : { name : string, resize : number[] }[],
     // optional, default is []
 } = {
     resize: [1024, 1024],
-}) => {
+}){
 	let fn = async (document : Document) => {
         const encoder = await getEncoder(options.basisOptions);
 		document.createExtension(KHRTextureBasisu).setRequired(true);
@@ -352,10 +344,10 @@ const textureCompressKTX2 = (options : {
 				}
 			}
 			const image = texture.getImage();
-            if (!image) {
-                console.error(`Texture ${texture.getName()} has no image.`);
-                continue;
-            }
+      if (!image) {
+          console.error(`Texture ${texture.getName()} has no image.`);
+          continue;
+      }
 			let encoded = await basisEncode(encoder,image, resizePreset);
 			texture.setImage(encoded);
 			texture.setMimeType('image/ktx2');
@@ -371,4 +363,4 @@ const textureCompressKTX2 = (options : {
 }
 
 
-export {textureCompressKTX2};
+export { textureCompressKTX2 };
