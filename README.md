@@ -2,6 +2,12 @@
 
 Browser compatible @gltf-transform/core function to compress textures in ktx2 format similar to the textureCompress function.
 
+## Installation
+
+```
+npm i gltf-transform-function-ktx2
+```
+
 ## Usage
 
 ```javascript
@@ -11,9 +17,8 @@ import { MeshoptSimplifier } from 'meshoptimizer';
 import { textureCompressKTX2 } from "gltf-transform-function-ktx2"
 
 /**
- * Example optimization pipeline implemented with the glTF Transform API.
- * Some optimizations, including KTX2 compression, require Node.js or CLI
- * environments. See https://gltf-transform.dev/ for full functionality.
+ * Example optimization pipeline implemented with the glTF Transform API + ktx2 compression on browser
+ * See https://gltf-transform.dev/ for full functionality.
  */
 
 await document.transform(
